@@ -3,7 +3,7 @@ from spacetime import Node
 from utils.pcc_models import Register
 
 def init(df, user_agent, fresh):
-    reg = df.read_one(Register, user_agent)
+    reg = df.read_one(Register, user_agent) # read_one() method is used to read the first row of the table.
     if not reg:
         reg = Register(user_agent, fresh)
         df.add_one(Register, reg)
@@ -20,7 +20,11 @@ def init(df, user_agent, fresh):
     return reg.load_balancer
 
 def get_cache_server(config, restart):
-    init_node = Node(
-        init, Types=[Register], dataframe=(config.host, config.port))
-    return init_node.start(
+    try:
+        init_node = Node(
+            init, Types=[Register], dataframe=(config.host, config.port))
+        return init_node.start(
         config.user_agent, restart or not os.path.exists(config.save_file))
+    except Exception as e:
+        print(f"Error: {e}")
+        pass

@@ -1,6 +1,5 @@
 from rtypes import pcc_set, dimension, primarykey
 
-
 @pcc_set
 class Register(object):
     crawler_id = primarykey(str)

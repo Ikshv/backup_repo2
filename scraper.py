@@ -5,17 +5,34 @@ def scraper(url, resp):
     links = extract_next_links(url, resp)
     return [link for link in links if is_valid(link)]
 
+# def extract_next_links(url, resp):
+#     # Implementation required.
+#     # url: the URL that was used to get the page
+#     # resp.url: the actual url of the page
+#     # resp.status: the status code returned by the server. 200 is OK, you got the page. Other numbers mean that there was some kind of problem.
+#     # resp.error: when status is not 200, you can check the error here, if needed.
+#     # resp.raw_response: this is where the page actually is. More specifically, the raw_response has two parts:
+#     #         resp.raw_response.url: the url, again
+#     #         resp.raw_response.content: the content of the page!
+#     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
+#     return list()
+
+from bs4 import BeautifulSoup
+from urllib.parse import urljoin
+
 def extract_next_links(url, resp):
-    # Implementation required.
-    # url: the URL that was used to get the page
-    # resp.url: the actual url of the page
-    # resp.status: the status code returned by the server. 200 is OK, you got the page. Other numbers mean that there was some kind of problem.
-    # resp.error: when status is not 200, you can check the error here, if needed.
-    # resp.raw_response: this is where the page actually is. More specifically, the raw_response has two parts:
-    #         resp.raw_response.url: the url, again
-    #         resp.raw_response.content: the content of the page!
-    # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
-    return list()
+    extracted_links = []
+    # Proceed only for successful HTTP responses
+    if resp.status == 200 and resp.raw_response and resp.raw_response.content:
+        # Parse the HTML content of the page
+        soup = BeautifulSoup(resp.raw_response.content, 'html.parser')
+        # Find all anchor tags and extract href attributes
+        for link in soup.find_all('a', href=True):
+            # Resolve relative URLs to absolute URLs
+            absolute_link = urljoin(url, link['href'])
+            extracted_links.append(absolute_link)
+    return extracted_links
+
 
 def is_valid(url):
     # Decide whether to crawl this url or not. 
