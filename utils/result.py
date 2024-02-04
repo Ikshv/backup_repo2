@@ -23,7 +23,7 @@ class Results:
         for simhash_value in self.simhash_values_LIST: # if simhash in list
             if simhash.distance(Simhash(simhash_value)) < simhash_distance: #
                 return True
-            print(simhash.distance(Simhash(simhash_value)))
+            # print(simhash.distance(Simhash(simhash_value)))
         return False
 
     def handle_simhash(self, simhash):

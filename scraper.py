@@ -1,6 +1,6 @@
 import time
 from utils.result import Results
-import requests
+
 from simhash import Simhash
 import nltk
 nltk.download('punkt')
@@ -10,7 +10,7 @@ from urllib.parse import urljoin, urlparse
 import re
 
 def scraper(url, resp, result):
-    resp={'status': resp.status_code, 'error': None, 'url': url, 'raw_response': {'url': resp.url, 'content': resp.text}}
+    # resp={'status': resp.status_code, 'error': None, 'url': url, 'raw_response': {'url': resp.url, 'content': resp.text}}
     if url in result.visited_urls: # If the URL has already been visited, return an empty list
         return []
     result.visited_urls.add(url) # Mark the URL as visited
@@ -29,9 +29,9 @@ def extract_next_links(url, resp, result):
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
     extracted_links = []
     # Proceed only for successful HTTP responses
-    if resp['status'] == 200 and resp['raw_response'] and resp['raw_response']['content']:
+    if resp.status == 200 and resp.raw_response and resp.raw_response.content:
         # Parse the HTML content of the page
-        soup = BeautifulSoup(resp['raw_response']['content'], 'html.parser')
+        soup = BeautifulSoup(resp.raw_response.content, 'html.parser')
         # Find all anchor tags and extract href attributes
         text = soup.get_text(separator=' ', strip=True)
         if not is_new_page(text, result):
@@ -45,6 +45,8 @@ def extract_next_links(url, resp, result):
             # Resolve relative URLs to absolute URLs
             absolute_link = urljoin(url, link['href']).split('#')[0]   
             extracted_links.append(absolute_link)
+    if resp.status != 200:
+        print(f"Error: {resp.error} for URL: {url}")
     ## TODO: DETECT AND AVOID SIMILAR PAGES W/ NO INFO
     ## TODO: DETECT AND AVOID CRAWLING VERY LARGE FILES, ESP W/ LOW INFO VAL.
     return extracted_links
@@ -96,21 +98,4 @@ def get_features(s):
 def is_new_page(text, results):
     ##TODO: Implement simhash
     simhash_value = Simhash(get_features(text))
-    print(simhash_value.value)
     return results.handle_simhash(simhash_value)
-
-if __name__ == '__main__':
-    urls=["https://www.ics.uci.edu/~lopes/"]
-    first = True
-    results = Results()
-    for url in urls:
-        response = requests.get(url) # Get the page
-        is_new_page(response.text, results)
-        print(url) # Scrape the page
-        if first:
-            urls.extend(scraper(url, response, results))
-            first=False        
-        time.sleep(0.15)
-
-    print(results.simhash_values_SET)
-    print(results.simhash_values_LIST)
