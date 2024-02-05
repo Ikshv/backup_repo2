@@ -8,7 +8,6 @@ from utils.server_registration import get_cache_server
 from crawler import Crawler
 from utils.pcc_models import Register
 
-
 ctrl_c_triggered = False
 
 def init(df, user_agent, fresh):

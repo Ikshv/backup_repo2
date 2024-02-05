@@ -13,8 +13,9 @@ def scraper(url, resp, result):
     # resp={'status': resp.status_code, 'error': None, 'url': url, 'raw_response': {'url': resp.url, 'content': resp.text}}
     if url in result.visited_urls: # If the URL has already been visited, return an empty list
         return []
-    result.visited_urls.add(url) # Mark the URL as visited
+    result.add_to_visited(url)
     links = extract_next_links(url, resp, result)
+    result.log_results(url) # Log the results
     return [link for link in links if is_valid(link)]
 
 def extract_next_links(url, resp, result):
@@ -29,8 +30,10 @@ def extract_next_links(url, resp, result):
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
     extracted_links = []
     # Proceed only for successful HTTP responses
+    # print(resp.status, resp.raw_response.content, resp.raw_response.url, resp.url, url)
     if resp.status == 200 and resp.raw_response and resp.raw_response.content:
         # Parse the HTML content of the page
+        print("starting to parse")
         soup = BeautifulSoup(resp.raw_response.content, 'html.parser')
         # Find all anchor tags and extract href attributes
         text = soup.get_text(separator=' ', strip=True)

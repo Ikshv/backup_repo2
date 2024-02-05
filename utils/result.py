@@ -1,6 +1,7 @@
 from simhash import Simhash
 import re
 from collections import defaultdict
+from utils import get_logger
 
 class Results:
     def __init__(self):
@@ -12,6 +13,7 @@ class Results:
         self.stop_words = self.initialize_stop_words()
         self.simhash_values_SET = set()
         self.simhash_values_LIST = []
+        self.logger = get_logger("RESULTS")
 
     def is_similar_simhash(self, simhash):
         
@@ -32,10 +34,18 @@ class Results:
             self.simhash_values_LIST.append(simhash)
             return True
         return False
+    
+    def add_to_visited(self, url):
+        #split on fragment
+        url = url.split('#')[0]
+        self.visited_urls.add(url)
 
     def add_word_to_common_count(self, word):
         if word not in self.stop_words:
             self.common_words[word] += 1
+
+    def get_most_common_words(self, n):
+        return sorted(self.common_words.items(), key=lambda x: x[1], reverse=True)[:n]
     
     def add_subdomain(self, subdomain):
         pattern = r'^(?:http[s]*://)?([^:/\s]+)'
@@ -52,3 +62,16 @@ class Results:
             for line in f:
                 stop_words.add(line.strip())
         return stop_words
+    
+    def log_results(self, url):
+        self.logger.info(
+            f"URL: {url} | "
+            f"Visited URLs: {len(self.visited_urls)} | "
+            f"Max words per page: {self.max_words_per_page} | "
+            f"Common words: {self.get_most_common_words(50)} | "
+            f"Subdomains: {len(self.subdomains)}"
+            )
+
+
+        
+        
