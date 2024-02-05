@@ -8,6 +8,7 @@ class Results:
         # self.unique_urls = 0
         self.visited_urls = set()
         self.max_words_per_page = 0
+        self.max_words_per_page_url = ""
         self.common_words = defaultdict(int)
         self.subdomains = defaultdict(int)
         self.stop_words = self.initialize_stop_words()
@@ -27,6 +28,12 @@ class Results:
                 return True
             # print(simhash.distance(Simhash(simhash_value)))
         return False
+    
+    def handle_max_words_per_page(self, url, num_words):
+        if num_words > self.max_words_per_page:
+            self.max_words_per_page = num_words
+            self.max_words_per_page_url = url
+        
 
     def handle_simhash(self, simhash):
         if not self.is_similar_simhash(simhash):
@@ -67,11 +74,16 @@ class Results:
         self.logger.info(
             f"URL: {url} | "
             f"Visited URLs: {len(self.visited_urls)} | "
-            f"Max words per page: {self.max_words_per_page} | "
+            f"Max words per page: {self.max_words_per_page} from URL {self.max_words_per_page_url} | "
             f"Common words: {self.get_most_common_words(50)} | "
-            f"Subdomains: {len(self.subdomains)}"
+            f"Subdomains: {self.subdomains.items()} | "
             )
 
 
-        
-        
+if __name__ == "__main__":
+    r = Results()
+    r.add_subdomain("http://www.google.com")
+    r.add_subdomain("http://testing.ics.uci.edu/rhee/vi")
+    r.add_subdomain("http://testing.ics.uci.edu/blah/foo")
+    
+    print(r.subdomains.items())

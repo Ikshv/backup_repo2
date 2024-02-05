@@ -14,6 +14,7 @@ def scraper(url, resp, result):
     if url in result.visited_urls: # If the URL has already been visited, return an empty list
         return []
     result.add_to_visited(url)
+    result.add_subdomain(url)
     links = extract_next_links(url, resp, result)
     result.log_results(url) # Log the results
     return [link for link in links if is_valid(link)]
@@ -42,9 +43,8 @@ def extract_next_links(url, resp, result):
         tokens = extract_data(text)
         for token in tokens:
             result.add_word_to_common_count(token)
-        if len(tokens) > result.max_words_per_page:
-            result.max_words_per_page = len(tokens)
-        for link in soup.find_all('a', href=True):
+        result.handle_max_words_per_page(url, len(tokens)) # Handle max words per page
+        for link in soup.find_all('a', href=True): # Extract all links
             # Resolve relative URLs to absolute URLs
             absolute_link = urljoin(url, link['href']).split('#')[0]   
             extracted_links.append(absolute_link)

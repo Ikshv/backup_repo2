@@ -11,8 +11,9 @@ class Response(object):
                 pickle.loads(resp_dict["response"])
                 if "response" in resp_dict else
                 None)
-            print(len(self.raw_response.content))
-            if len(self.raw_response.content) > 20000000000:
+            if self.raw_response:
+                print(len(self.raw_response.content))
+            if not self.raw_response or len(self.raw_response.content) > 50000:
                 self.raw_response = None
         except TypeError:
             self.raw_response = None
