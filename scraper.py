@@ -61,7 +61,12 @@ def extract_data(text):
     # resp: the response object associated with the page
     # Return a dictionary with the data you want to save from the page    
     tokens = word_tokenize(text)
-    return [token for token in tokens if token.isalnum()]
+    return [token.lower() for token in tokens if token.isalnum()]
+
+# def calculate_html_text_ratio(html_content):
+#     soup = BeautifulSoup(html_content, 'html.parser')
+#     text = soup.get_text(separator=' ', strip=True)
+#     return len(text) / len(html_content)
 
 def is_valid(url):
     # Decide whether to crawl this url or not. 

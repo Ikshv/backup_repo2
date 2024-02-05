@@ -8,7 +8,7 @@ import threading
 
 class Worker(Thread):
     def __init__(self, worker_id, config, frontier, result):
-        self.logger = get_logger(f"Worker-{worker_id}", "Worker")
+        self.logger = get_logger(f"Worker-{worker_id}", "WORKER")
         self.config = config
         self.frontier = frontier
         self.result = result
@@ -22,7 +22,7 @@ class Worker(Thread):
     def run(self):
         while True:
             tbd_url = self.frontier.get_tbd_url()
-            print("work received", tbd_url)
+            # print("work received", tbd_url)
             if not tbd_url:
                 self.logger.info("Frontier is empty. Stopping Crawler.")
                 break
@@ -38,6 +38,9 @@ class Worker(Thread):
             #     f"Adding scraped urls to frontier."
             #     f"Result: {self.result.__dict__}"
             # )
+            if len(self.result.visited_urls) % 5 == 0:
+                print("saving to file -- 100")
+                self.result.write_to_file('results.csv')
             for scraped_url in scraped_urls:
                 self.frontier.add_url(scraped_url)
             self.frontier.mark_url_complete(tbd_url)
@@ -52,6 +55,7 @@ class Worker(Thread):
             return self.shutdown_request
         
     def graceful_shutdown(self):
+        self.result.write_to_file('results.csv')
         self.request_shutdown()
         self.join()
         self.logger.info(f"Worker-{self.ident} has shutdown gracefully.")

@@ -12,7 +12,7 @@ class Crawler(object):
         self.frontier = frontier_factory(config, restart)
         self.workers = list()
         self.worker_factory = worker_factory
-        self.result = Results()
+        self.result = Results().read_from_file('results.csv')
         self.shutdown_request = False
         self.shutdown_lock = threading.Lock()
 
@@ -42,7 +42,7 @@ class Crawler(object):
     def graceful_shutdown(self):
         
         self.request_shutdown()
-
+        self.result.write_to_file('results.csv')
         for worker in self.workers:
             worker.graceful_shutdown()
 

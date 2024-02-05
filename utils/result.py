@@ -1,3 +1,4 @@
+import os
 from simhash import Simhash
 import re
 from collections import defaultdict
@@ -33,7 +34,6 @@ class Results:
         if num_words > self.max_words_per_page:
             self.max_words_per_page = num_words
             self.max_words_per_page_url = url
-        
 
     def handle_simhash(self, simhash):
         if not self.is_similar_simhash(simhash):
@@ -78,6 +78,42 @@ class Results:
             f"Common words: {self.get_most_common_words(50)} | "
             f"Subdomains: {self.subdomains.items()} | "
             )
+        
+    def write_to_file(self, filename):
+        print("writing to file")
+        with open(filename, "w") as f:
+            f.write(
+                f"{len(self.visited_urls)},{','.join(list(self.visited_urls))}\n" #comma-separated list of visited urls
+                f"{self.max_words_per_page},{self.max_words_per_page_url}\n"
+                f"{','.join([f'{word},{freq}' for (word,freq) in sorted(self.common_words.items(), key=lambda x: x[1], reverse=True)])}\n"
+                f"{len(self.subdomains)},{','.join([f'{subdomain},{freq}' for (subdomain,freq) in self.subdomains.items()])}\n"
+                # f"{','.join(self.simhash_values_LIST)}\n"
+                f"{','.join([str(simhash_value) for simhash_value in self.simhash_values_SET])}\n"
+            )
+
+    def read_from_file(self, filename):
+        print("reading from file")
+        r = Results()
+        if not filename or not os.path.exists(filename):
+            return r
+        with open(filename, "r") as f:
+            visited_urls = f.readline().strip().split(',')
+            r.visited_urls = set(visited_urls[1:])
+            max_words_per_page = f.readline().strip().split(',')
+            r.max_words_per_page = int(max_words_per_page[0])
+            r.max_words_per_page_url = max_words_per_page[1]
+            common_words = f.readline().strip().split(',')
+            for i in range(0, len(common_words), 2):
+                r.common_words[common_words[i]] = int(common_words[i+1])
+            subdomains = f.readline().strip().split(',')
+            for i in range(1, len(subdomains), 2):
+                r.subdomains[subdomains[i]] = int(subdomains[i+1])
+            simhash_values_set = f.readline().strip().split(',')
+            for simhash_value in simhash_values_set:
+                r.simhash_values_SET.add(simhash_value)
+                r.simhash_values_LIST.append(Simhash(simhash_value))
+        return r
+
 
 
 if __name__ == "__main__":
