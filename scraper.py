@@ -3,21 +3,24 @@ from utils.result import Results
 
 from simhash import Simhash
 import nltk
+
 nltk.download('punkt')
 from nltk.tokenize import word_tokenize
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse
 import re
 
+
 def scraper(url, resp, result):
     # resp={'status': resp.status_code, 'error': None, 'url': url, 'raw_response': {'url': resp.url, 'content': resp.text}}
-    if url in result.visited_urls: # If the URL has already been visited, return an empty list
+    if url in result.visited_urls or is_calendar_url(url):  # If the URL has already been visited, return an empty list
         return []
     result.add_to_visited(url)
     result.add_subdomain(url)
     links = extract_next_links(url, resp, result)
-    result.log_results(url) # Log the results
+    result.log_results(url)  # Log the results
     return [link for link in links if is_valid(link)]
+
 
 def extract_next_links(url, resp, result):
     # Implementation required.
@@ -43,16 +46,18 @@ def extract_next_links(url, resp, result):
         tokens = extract_data(text)
         for token in tokens:
             result.add_word_to_common_count(token)
-        result.handle_max_words_per_page(url, len(tokens)) # Handle max words per page
-        for link in soup.find_all('a', href=True): # Extract all links
+        result.handle_max_words_per_page(url, len(tokens))  # Handle max words per page
+        for link in soup.find_all('a', href=True):  # Extract all links
             # Resolve relative URLs to absolute URLs
-            absolute_link = urljoin(url, link['href']).split('#')[0]   
-            extracted_links.append(absolute_link)
+            absolute_link = urljoin(url, link['href']).split('#')[0]
+            if not is_calendar_url(absolute_link):
+                extracted_links.append(absolute_link)
     if resp.status != 200:
         print(f"Error: {resp.error} for URL: {url}")
     ## TODO: DETECT AND AVOID SIMILAR PAGES W/ NO INFO
     ## TODO: DETECT AND AVOID CRAWLING VERY LARGE FILES, ESP W/ LOW INFO VAL.
     return extracted_links
+
 
 def extract_data(text):
     # Extract data from the page
@@ -63,10 +68,26 @@ def extract_data(text):
     tokens = word_tokenize(text)
     return [token.lower() for token in tokens if token.isalnum()]
 
+
 # def calculate_html_text_ratio(html_content):
 #     soup = BeautifulSoup(html_content, 'html.parser')
 #     text = soup.get_text(separator=' ', strip=True)
 #     return len(text) / len(html_content)
+
+def is_calendar_url(url):
+    patterns = [
+        r'.*calendar.*',
+        r'.*event.*',
+        r'.*schedule.*',
+        r'.*\?date=.*',
+        r'.*\?start=.*&end=.*',
+        r'https?://[^/]+/calendar/.*',
+        r'https?://[^/]+/events/.*',
+        r'.*\d{4}/\d{2}/\d{2}.*',
+        r'.*\d{2}/\d{2}/\d{4}.*'
+    ]
+    return any(re.search(pattern, url) for pattern in patterns)
+
 
 def is_valid(url):
     # Decide whether to crawl this url or not. 
@@ -77,11 +98,11 @@ def is_valid(url):
         if parsed.scheme not in set(["http", "https"]):
             return False
         if not re.match(
-            r".*\.ics\.uci\.edu.*|"
-            + r".*\.cs\.uci\.edu.*|"
-            + r".*\.informatics\.uci\.edu.*|"
-            + r".*\.stat\.uci\.edu.*|"
-            + r"today\.uci\.edu/department/information_computer_sciences.*", parsed.netloc.lower()):
+                r".*\.ics\.uci\.edu.*|"
+                + r".*\.cs\.uci\.edu.*|"
+                + r".*\.informatics\.uci\.edu.*|"
+                + r".*\.stat\.uci\.edu.*|"
+                + r"today\.uci\.edu/department/information_computer_sciences.*", parsed.netloc.lower()):
             return False
         return not re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
@@ -94,15 +115,17 @@ def is_valid(url):
             + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower())
 
     except TypeError:
-        print ("TypeError for ", parsed)
+        print("TypeError for ", parsed)
         raise
+
 
 def get_features(s):
     width = 5
     s = s.lower()
     s = re.sub(r'[^\w]+', '', s)
     return [s[i:i + width] for i in range(max(len(s) - width + 1, 1))]
-    
+
+
 def is_new_page(text, results):
     ##TODO: Implement simhash
     simhash_value = Simhash(get_features(text))
