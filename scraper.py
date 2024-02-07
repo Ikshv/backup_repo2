@@ -21,7 +21,6 @@ def scraper(url, resp, result):
     result.log_results(url)  # Log the results
     return [link for link in links if is_valid(link)]
 
-
 def extract_next_links(url, resp, result):
     # Implementation required.
     # url: the URL that was used to get the page
@@ -58,7 +57,6 @@ def extract_next_links(url, resp, result):
     ## TODO: DETECT AND AVOID CRAWLING VERY LARGE FILES, ESP W/ LOW INFO VAL.
     return extracted_links
 
-
 def extract_data(text):
     # Extract data from the page
     # Implementation required.
@@ -67,7 +65,6 @@ def extract_data(text):
     # Return a dictionary with the data you want to save from the page    
     tokens = word_tokenize(text)
     return [token.lower() for token in tokens if token.isalnum()]
-
 
 # def calculate_html_text_ratio(html_content):
 #     soup = BeautifulSoup(html_content, 'html.parser')
@@ -87,7 +84,6 @@ def is_calendar_url(url):
         r'.*\d{2}/\d{2}/\d{4}.*'
     ]
     return any(re.search(pattern, url) for pattern in patterns)
-
 
 def is_valid(url):
     # Decide whether to crawl this url or not. 

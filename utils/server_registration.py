@@ -1,21 +1,26 @@
 import os
-from spacetime import Node, Dataframe
+from spacetime import Node
 from utils.pcc_models import Register
 
-# Define a function to get the cache server information
-def get_cache_server(config, restart, init_wrapper):
-    try:
-        # Create a Dataframe configuration
-        dataframe_details = Dataframe(appname=config.host, server_port=config.port, types=[Register])
-        # print(dataframe_details.details)
-        
-        # Initialize the Node with the wrapper function
-        init_node = Node(target=init_wrapper, Types=[Register], dataframe=dataframe_details)
-        
-        # Start the node and wait for it to complete
-        cache_server_info = init_node.start  # Use start_async if you want non-blocking behavior
-        # print(f"Cache server information: {init_node.dataframe_details}")
-        return cache_server_info
-    except Exception as e:
-        print(f"Error: {e}")
-        raise e  # It's usually better to raise the exception after logging to ensure calling code can handle it
+def init(df, user_agent, fresh):
+    reg = df.read_one(Register, user_agent)
+    if not reg:
+        reg = Register(user_agent, fresh)
+        df.add_one(Register, reg)
+        df.commit()
+        df.push_await()
+    while not reg.load_balancer:
+        df.pull_await()
+        if reg.invalid:
+            raise RuntimeError("User agent string is not acceptable.")
+        if reg.load_balancer:
+            df.delete_one(Register, reg)
+            df.commit()
+            df.push()
+    return reg.load_balancer
+
+def get_cache_server(config, restart):
+    init_node = Node(
+        init, Types=[Register], dataframe=(config.host, config.port))
+    return init_node.start(
+        config.user_agent, restart or not os.path.exists(config.save_file))
