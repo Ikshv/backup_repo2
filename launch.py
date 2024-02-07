@@ -44,8 +44,7 @@ def main(config_file, restart):
         cparser.read(config_file) # read() method reads the configuration file and returns a list of sections.
         config = Config(cparser) # Config is a class that is used to store the configuration settings.
         config.cache_server = get_cache_server(config, restart, init_wrapper) # get_cache_server() method returns the cache server.
-        # Example adjustment in your main script or wherever the download function is called
-        config.cache_server = (config.host, config.port)  # Set this to your actual cache server details
+        # config.cache_server = (config.host, config.port)  # Set this to your actual cache server details
         print(config.save_file)
         crawler = Crawler(config, restart) # Crawler is a class that is used to start the crawler.
         crawler.start() # start() method is used to start the crawler.
